@@ -6,6 +6,9 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 
 contract MoodNft is ERC721 {
+    //** Errors */
+    error MoodNft__CantFlipIfNotOwner();
+
     uint private s_tokenCounter;
     string private s_sadSvgImageUri;
     string private s_happySvgImageUri;
@@ -30,6 +33,19 @@ contract MoodNft is ERC721 {
         _safeMint(msg.sender, s_tokenCounter);
         tokenIdToMood[s_tokenCounter] = Mood.HAPPY;
         s_tokenCounter++;
+    }
+
+    function flipMood(uint256 tokenId) public {
+        if (
+            getApproved(tokenId) != msg.sender && ownerOf(tokenId) != msg.sender
+        ) {
+            revert MoodNft__CantFlipIfNotOwner();
+        }
+        if (tokenIdToMood[tokenId] == Mood.HAPPY) {
+            tokenIdToMood[tokenId] = Mood.SAD;
+        } else {
+            tokenIdToMood[tokenId] = Mood.HAPPY;
+        }
     }
 
     function _baseURI() internal pure override returns (string memory) {
