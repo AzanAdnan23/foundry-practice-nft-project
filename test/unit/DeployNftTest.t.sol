@@ -3,14 +3,15 @@
 pragma solidity ^0.8.24;
 
 import {Test, console} from "forge-std/Test.sol";
+import {MoodNft} from "../../src/MoodNft.sol";
 import {DeployMoodNft} from "../../script/DeployMoodNft.s.sol";
 
-contract DeployNftTest is Test {
-    DeployMoodNft deployMoodNft;
+contract DeployNftintegrationTest is Test {
+    DeployMoodNft deployer;
 
     function setUp() public {
-        deployMoodNft = new DeployMoodNft();
+        deployer = new DeployMoodNft();
     }
 
-    function testSvgToImageURI() public {}
+    //function testSvgToImageURI() public {}
 }

@@ -8,6 +8,7 @@ import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
 contract MoodNft is ERC721 {
     //** Errors */
     error MoodNft__CantFlipIfNotOwner();
+    error ERC721Metadata__URI_QueryFor_NonExistentToken();
 
     uint private s_tokenCounter;
     string private s_sadSvgImageUri;
@@ -53,8 +54,13 @@ contract MoodNft is ERC721 {
     }
 
     function tokenUri(uint256 tokenId) public view returns (string memory) {
+        if (ownerOf(tokenId) == address(0)) {
+            revert ERC721Metadata__URI_QueryFor_NonExistentToken();
+        }
+
         string memory imageURI = s_happySvgImageUri;
-        if (tokenIdToMood[tokenId] == Mood.HAPPY) {
+
+        if (tokenIdToMood[tokenId] == Mood.SAD) {
             imageURI = s_sadSvgImageUri;
         }
         return
@@ -62,15 +68,13 @@ contract MoodNft is ERC721 {
                 abi.encodePacked(
                     _baseURI(),
                     Base64.encode(
-                        bytes( // bytes casting actually unnecessary as 'abi.encodePacked()' returns a bytes
-                            abi.encodePacked(
-                                '{"name":"',
-                                "Mao",
-                                '", "description":"An NFT that reflects the mood of the owner, 100% on Chain!", ',
-                                '"attributes": [{"trait_type": "moodiness", "value": 100}], "image":"',
-                                imageURI,
-                                '"}'
-                            )
+                        abi.encodePacked(
+                            '{"name":"',
+                            name(),
+                            '", "description":"An NFT that reflects the mood of the owner, 100% on Chain!", ',
+                            '"attributes": [{"trait_type": "moodiness", "value": 100}], "image":"',
+                            imageURI,
+                            '"}'
                         )
                     )
                 )
