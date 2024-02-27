@@ -7,8 +7,8 @@ import {BasicNFT} from "../../src/BasicNFT.sol";
 import {DeployBasicNFT} from "../../script/DeployBasicNFt.s.sol";
 
 contract BasicNFTTest is Test {
-    string constant NFT_NAME = "Mano";
-    string constant NFT_SYMBOL = "CAT";
+    string constant NFT_NAME = "Dogie";
+    string constant NFT_SYMBOL = "DOG";
 
     DeployBasicNFT public deployBasicNFT;
     BasicNFT public basicNFT;

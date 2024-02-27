@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
+import {console} from "forge-std/console.sol";
 
 contract MoodNft is ERC721 {
     //** Errors */
@@ -24,7 +25,7 @@ contract MoodNft is ERC721 {
     constructor(
         string memory sadSvgImageUri,
         string memory happySvgImageUri
-    ) ERC721("MoodNft", "MN") {
+    ) ERC721("Mood NFT", "MN") {
         s_tokenCounter = 0;
         s_sadSvgImageUri = sadSvgImageUri;
         s_happySvgImageUri = happySvgImageUri;
@@ -40,6 +41,7 @@ contract MoodNft is ERC721 {
         if (
             getApproved(tokenId) != msg.sender && ownerOf(tokenId) != msg.sender
         ) {
+            console.log(" Reverting because not owner or approved");
             revert MoodNft__CantFlipIfNotOwner();
         }
         if (tokenIdToMood[tokenId] == Mood.HAPPY) {
@@ -53,8 +55,11 @@ contract MoodNft is ERC721 {
         return "data:application/json;base64,";
     }
 
-    function tokenUri(uint256 tokenId) public view returns (string memory) {
+    function tokenURI(
+        uint256 tokenId
+    ) public view override returns (string memory) {
         if (ownerOf(tokenId) == address(0)) {
+            console.log(" Reverting because token does not exist");
             revert ERC721Metadata__URI_QueryFor_NonExistentToken();
         }
 
@@ -62,6 +67,7 @@ contract MoodNft is ERC721 {
 
         if (tokenIdToMood[tokenId] == Mood.SAD) {
             imageURI = s_sadSvgImageUri;
+            console.log(" image uri converted to Sad svg");
         }
         return
             string(
@@ -70,7 +76,7 @@ contract MoodNft is ERC721 {
                     Base64.encode(
                         abi.encodePacked(
                             '{"name":"',
-                            name(),
+                            name(), // You can add whatever name here
                             '", "description":"An NFT that reflects the mood of the owner, 100% on Chain!", ',
                             '"attributes": [{"trait_type": "moodiness", "value": 100}], "image":"',
                             imageURI,
