@@ -67,7 +67,7 @@ contract MoodNft is ERC721 {
 
         if (tokenIdToMood[tokenId] == Mood.SAD) {
             imageURI = s_sadSvgImageUri;
-            console.log(" image uri converted to Sad svg");
+            console.log(" image uri converted to sad svg");
         }
         return
             string(
