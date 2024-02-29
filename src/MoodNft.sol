@@ -1,53 +1,76 @@
-//SPDX-License-Identifier: MIT
+// Layout of Contract:
+// version
+// imports
+// errors
+// interfaces, libraries, contracts
+// Type declarations
+// State variables
+// Events
+// Modifiers
+// Functions
 
-pragma solidity ^0.8.20;
+// Layout of Functions:
+// constructor
+// receive function (if exists)
+// fallback function (if exists)
+// external
+// public
+// internal
+// private
+// view & pure functions
+
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.24;
 
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {Base64} from "@openzeppelin/contracts/utils/Base64.sol";
-import {console} from "forge-std/console.sol";
 
-contract MoodNft is ERC721 {
-    //** Errors */
-    error MoodNft__CantFlipIfNotOwner();
+contract MoodNft is ERC721, Ownable {
     error ERC721Metadata__URI_QueryFor_NonExistentToken();
+    error MoodNft__CantFlipMoodIfNotOwner();
 
-    uint private s_tokenCounter;
-    string private s_sadSvgImageUri;
-    string private s_happySvgImageUri;
-
-    enum Mood {
+    enum NFTState {
         HAPPY,
         SAD
     }
 
-    mapping(uint256 => Mood) tokenIdToMood;
+    uint256 private s_tokenCounter;
+    string private s_sadSvgUri;
+    string private s_happySvgUri;
+
+    mapping(uint256 => NFTState) private s_tokenIdToState;
+
+    event CreatedNFT(uint256 indexed tokenId);
 
     constructor(
-        string memory sadSvgImageUri,
-        string memory happySvgImageUri
-    ) ERC721("Mood NFT", "MN") {
+        string memory sadSvgUri,
+        string memory happySvgUri
+    ) ERC721("Mood NFT", "MN") Ownable(msg.sender) {
         s_tokenCounter = 0;
-        s_sadSvgImageUri = sadSvgImageUri;
-        s_happySvgImageUri = happySvgImageUri;
+        s_sadSvgUri = sadSvgUri;
+        s_happySvgUri = happySvgUri;
     }
 
     function mintNft() public {
-        _safeMint(msg.sender, s_tokenCounter);
-        tokenIdToMood[s_tokenCounter] = Mood.HAPPY;
-        s_tokenCounter++;
+        // how would you require payment for this NFT?
+        uint256 tokenCounter = s_tokenCounter;
+        _safeMint(msg.sender, tokenCounter);
+        s_tokenCounter = s_tokenCounter + 1;
+        emit CreatedNFT(tokenCounter);
     }
 
     function flipMood(uint256 tokenId) public {
         if (
             getApproved(tokenId) != msg.sender && ownerOf(tokenId) != msg.sender
         ) {
-            console.log(" Reverting because not owner or approved");
-            revert MoodNft__CantFlipIfNotOwner();
+            revert MoodNft__CantFlipMoodIfNotOwner();
         }
-        if (tokenIdToMood[tokenId] == Mood.HAPPY) {
-            tokenIdToMood[tokenId] = Mood.SAD;
+
+        if (s_tokenIdToState[tokenId] == NFTState.HAPPY) {
+            s_tokenIdToState[tokenId] = NFTState.SAD;
         } else {
-            tokenIdToMood[tokenId] = Mood.HAPPY;
+            s_tokenIdToState[tokenId] = NFTState.HAPPY;
         }
     }
 
@@ -57,23 +80,21 @@ contract MoodNft is ERC721 {
 
     function tokenURI(
         uint256 tokenId
-    ) public view override returns (string memory) {
+    ) public view virtual override returns (string memory) {
         if (ownerOf(tokenId) == address(0)) {
-            console.log(" Reverting because token does not exist");
             revert ERC721Metadata__URI_QueryFor_NonExistentToken();
         }
+        string memory imageURI = s_happySvgUri;
 
-        string memory imageURI = s_happySvgImageUri;
-
-        if (tokenIdToMood[tokenId] == Mood.SAD) {
-            imageURI = s_sadSvgImageUri;
-            console.log(" image uri converted to sad svg");
+        if (s_tokenIdToState[tokenId] == NFTState.SAD) {
+            imageURI = s_sadSvgUri;
         }
         return
             string(
                 abi.encodePacked(
                     _baseURI(),
                     Base64.encode(
+                        // bytes casting actually unnecessary as 'abi.encodePacked()' returns a bytes
                         abi.encodePacked(
                             '{"name":"',
                             name(), // You can add whatever name here
@@ -85,5 +106,17 @@ contract MoodNft is ERC721 {
                     )
                 )
             );
+    }
+
+    function getHappySVG() public view returns (string memory) {
+        return s_happySvgUri;
+    }
+
+    function getSadSVG() public view returns (string memory) {
+        return s_sadSvgUri;
+    }
+
+    function getTokenCounter() public view returns (uint256) {
+        return s_tokenCounter;
     }
 }
